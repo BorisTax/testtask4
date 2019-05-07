@@ -2,49 +2,59 @@ import React from 'react';
 import './style.css';
 
 export default class Main extends React.Component {
-  static letters="ABCDEFGH";
-  static numbers="12345678";
+  static letters=" ABCDEFGH ";
   constructor(){
     super();
-    this.state={moves:[],error:false};
+    let board=[];
+    for(let i=0;i<=7;i++)
+      for(let j=0;j<=7;j++)
+         board.push({color:(i+j)%2===0?"#eee":"#000",selected:false});
+    this.state={board,selected:-1,moves:new Set()};
   }
-  isValid(position){
-    if(position.length!=2) return false;
-    if(Main.letters.includes(position[0])&&Main.numbers.includes(position[1])) return true;
-    return false;
-  }
-  getMoves(position){
-    let i=Main.letters.indexOf(position[0])+1;
-    let j=position[1];
-    let res=[];
+
+  getMoves(index){
+    let i=Math.trunc(index/8);
+    let j=index%8;
+    let res=new Set();
     for(let i0=i-2;i0<=i+2;i0++)
       for(let j0=j-2;j0<=j+2;j0++)
-        if(i0>0&&i0<9&&j0>0&&j0<9)
-          if(Math.abs((i-i0)*(j-j0))==2) res.push(Main.letters[i0-1]+j0);
+        if(i0>=0&&i0<8&&j0>=0&&j0<8)
+          if(Math.abs((i-i0)*(j-j0))===2) res.add(i0*8+j0);
     return res;   
   }
-  onClick(){
-    let position=document.querySelector('#input').value.trim();
-    let res={};
-    res.error=!this.isValid(position);//проверка на правильность ввода
-    if(!res.error) res.moves=this.getMoves(position); //рассчет возможных ходов
-    this.setState(res); 
+  onClick(index){
+    let moves=this.getMoves(index);
+    this.setState({moves,selected:index}); 
   }
-  onChange(){
-    //очищаем поле вывода результата при редактировании
-    this.setState({moves:[],error:false});
-  }
+
   render(){
-    return <div className="main" >
-              Исходное положение:<br/>
-              <input id="input" onChange={this.onChange.bind(this)}/>
-              <br/><br/>
-              <input type="button" value="Ок" onClick={this.onClick.bind(this)} />
-              <br/>
-              <div className="result">{this.state.error===true?'Ошибка ввода':(this.state.moves.length>0?"Возможные варианты хода: \n"+this.state.moves.join(" "):"")}</div>
-      </div>
-  
-  }
+      let board=[];
+      board.push(Main.letters.split("").map((item)=><div className="pos">{item}</div>));
+      for(let i=1;i<=8;i++){
+            board.push(<div className="pos">{9-i}</div>);
+            board.push(this.state.board.slice((i-1)*8,(i-1)*8+8).map((item,colIndex)=>{
+                                  let index=colIndex+(i-1)*8;
+                                  let color=item.color;
+                                  if(this.state.selected>=0){
+                                      color=index===this.state.selected?"blue":this.state.moves.has(index)?"green":color;
+                                      }
+                                  return <div className="cell" 
+                                      onClick={this.onClick.bind(this,index)} 
+                                      style={{backgroundColor:color}}>
+                                    </div>
+                                  }));
+            board.push(<div className="pos">{9-i}</div>);
+            }
+      board.push(Main.letters.split("").map((item)=><div className="pos">{item}</div>));          
+      return <div className="main">
+              <div className="board" >
+                {board}
+              </div>
+              </div>
+
+        
+      
+      }
 }
 
 
